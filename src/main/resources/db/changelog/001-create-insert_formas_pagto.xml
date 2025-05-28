@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <changeSet id="001" author="hiran">
+        <createTable tableName="formaspagamento">
+            <column name="id" type="java.sql.Types.BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="PK_ID_FORMA_PAGTO" nullable="false"/>
+            </column>
+            <column name="nome" type="java.sql.Types.VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <changeSet id="002" author="hiran">
+        <sql>insert into formaspagamento (nome) values ('DEBITO');</sql>
+        <sql>insert into formaspagamento (nome) values ('CREDITO');</sql>
+        <sql>insert into formaspagamento (nome) values ('PIX');</sql>
+    </changeSet>
+
+</databaseChangeLog>

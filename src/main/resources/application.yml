@@ -1,0 +1,42 @@
+server:
+  port: 8081
+  error:
+    include-stacktrace: never
+
+spring:
+  cache:
+    type: redis
+  redis:
+    host: localhost
+    port: 6379
+
+  application:
+    name: vendas
+
+  kafka:
+    bootstrap-servers: localhost:9093
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/vendas
+    hikari:
+      username: postgres
+      password: secret
+      driver-class-name: org.postgresql.Driver
+      liquibase:
+        enabled: false
+        change-log: classpath:/db/changelog/db.changelog-master.xml
+
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        ddl-auto: none
+        boot:
+          allow_jdbc_metadata_access: false
+    generate-ddl: false
+    show-sql: false
+
+mesadigital:
+  urlcaixa: /caixas
+  urlBase: http://localhost:8082
