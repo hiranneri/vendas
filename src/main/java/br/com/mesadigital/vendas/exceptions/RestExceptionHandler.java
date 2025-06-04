@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,22 +42,26 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
     public ResponseEntity<Object> handleExceptionInternal(Exception ex, @Nullable Object body, HttpHeaders headers,
                                                                          HttpStatusCode statusCode, WebRequest request) {
-        String mensagemErroEnvio = "Erro no envio dos dados";
+        DetalhesValidacaoException detalhesValidacaoException = null;
+        try {
+            String mensagemErroEnvio = "Erro no envio dos dados";
+            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) ex;
 
-        MethodArgumentNotValidException exception = (MethodArgumentNotValidException) ex;
+            List<FieldError> camposComErro = exception.getBindingResult().getFieldErrors();
+            String campos = camposComErro.stream().map(FieldError::getField).collect(Collectors.joining(", "));
+            String mensagensCampo = camposComErro.stream().map(FieldError::getDefaultMessage).collect(Collectors.joining(", "));
 
+            detalhesValidacaoException = new DetalhesValidacaoException(
+                    mensagemErroEnvio,
+                    DataUtils.toPTBR(LocalDateTime.now()),
+                    HttpStatus.BAD_REQUEST.value(),
+                    mensagensCampo,
+                    campos
+            );
 
-        List<FieldError> camposComErro = exception.getBindingResult().getFieldErrors();
-        String campos = camposComErro.stream().map(FieldError::getField).collect(Collectors.joining(", "));
-        String mensagensCampo = camposComErro.stream().map(FieldError::getDefaultMessage).collect(Collectors.joining(", "));
-
-        DetalhesValidacaoException detalhesValidacaoException = new DetalhesValidacaoException(
-                mensagemErroEnvio,
-                DataUtils.toPTBR(LocalDateTime.now()),
-                HttpStatus.BAD_REQUEST.value(),
-                mensagensCampo,
-                campos
-        );
+        } catch (Exception e) {
+            // Já tratado
+        }
 
         return createResponseEntity(detalhesValidacaoException, headers, statusCode, request);
 

@@ -35,13 +35,8 @@ spring:
         boot:
           allow_jdbc_metadata_access: false
     generate-ddl: true
-    show-sql: true
+    show-sql: false
 
 mesadigital:
   urlcaixa: /caixas
   urlBase: http://localhost:8082
-
-logging:
-  level:
-    org.springframework.cache: DEBUG
-    org.springframework.data.redis.cache: DEBUG

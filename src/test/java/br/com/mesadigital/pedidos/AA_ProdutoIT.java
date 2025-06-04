@@ -97,7 +97,7 @@ public class AA_ProdutoIT extends TestContainerConfig {
     @DisplayName("Tenta procurar um produto excluído")
     void AG_PesquisarProdutoExcluidaDeveRetornar403() throws Exception {
 
-        long idProduto = 1L;
+        int idProduto = 1;
         mockMvc.perform(
                 get("/produtos" + idProduto)
                         .contentType(MediaType.APPLICATION_JSON)

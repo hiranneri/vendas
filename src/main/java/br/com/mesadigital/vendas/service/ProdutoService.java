@@ -33,24 +33,24 @@ public class ProdutoService {
     }
 
     @Transactional
-    public void desativar(Long id) {
+    public void desativar(Long id) throws BadRequestException {
         try {
             Produto produto = pesquisarProdutoPeloID(id);
             produto.setStatus(STATUS_INATIVO);
             produtoRepository.save(produto);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
     }
 
     public Produto pesquisarProdutoPeloID(Long id) throws BadRequestException {
         Produto produto;
-        produto = produtoRepository.findById(id)
+        produto = produtoRepository.findByIdAndStatus(id, STATUS_ATIVO)
                 .orElseThrow(() -> new BadRequestException("Produto não encontrado"));
         return produto;
     }
 
-    public ProdutoDTO editar(ProdutoDTO produtoDTO) {
+    public ProdutoDTO editar(ProdutoDTO produtoDTO) throws BadRequestException {
         try {
             Produto produtoLocalizado = pesquisarProdutoPeloID(produtoDTO.id);
             BeanUtils.copyProperties(produtoDTO, produtoLocalizado);
@@ -58,12 +58,12 @@ public class ProdutoService {
 
             return produtoDTO;
         } catch(Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
 
     }
 
-    public ProdutoDTO buscar(@Valid Long idProduto) {
+    public ProdutoDTO buscar(@Valid Long idProduto) throws BadRequestException {
         try {
             Produto produtoLocalizado = pesquisarProdutoPeloID(idProduto);
             return new ProdutoDTO(
@@ -79,7 +79,7 @@ public class ProdutoService {
                     produtoLocalizado.isStatus()
             );
         }catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new BadRequestException(e.getMessage());
         }
 
     }

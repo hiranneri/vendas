@@ -1,0 +1,33 @@
+name: vendas-ci
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  check-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2 # action realiza o clone do projeto e faz o checkout para a branch configurada
+      - name: Setup Java 21
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.21
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run tests with Maven
+        run: mvn clean verify package -Pintegration-tests -Dspring.profiles.active=dev
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push image to DockerHub
+        id: docker_build
+        run: mvn clean install -U -DskipTests -Ddocker && docker push hiranneri/vendas-service

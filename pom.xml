@@ -142,7 +142,7 @@
 						<configuration>
 							<images>
 								<image>
-									<name>vendas-service</name>
+									<name>hiranneri/vendas-service</name>
 									<build>
 										<dockerFile>Dockerfile</dockerFile>
 										<contextDir>${project.basedir}</contextDir>
@@ -159,6 +159,24 @@
 								</goals>
 							</execution>
 						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>integration-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>${maven-surefire-plugin.version}</version>
+						<configuration>
+							<includes>
+								<include>**/*IT.*</include>
+							</includes>
+							<runOrder>alphabetical</runOrder>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

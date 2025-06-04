@@ -3,6 +3,7 @@ package br.com.mesadigital.vendas.controller;
 import br.com.mesadigital.vendas.controller.dto.ProdutoDTO;
 import br.com.mesadigital.vendas.service.ProdutoService;
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,17 +24,17 @@ public class ProdutoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProdutoDTO> buscar(@PathVariable @Valid Long id) {
+    public ResponseEntity<ProdutoDTO> buscar(@PathVariable @Valid Long id) throws BadRequestException {
         return new ResponseEntity<ProdutoDTO>(produtoService.buscar(id), HttpStatus.OK);
     }
 
     @PatchMapping
-    public ResponseEntity<ProdutoDTO> editar(@RequestBody @Valid ProdutoDTO produtoDTO) {
+    public ResponseEntity<ProdutoDTO> editar(@RequestBody @Valid ProdutoDTO produtoDTO) throws BadRequestException {
         return new ResponseEntity<ProdutoDTO>(produtoService.editar(produtoDTO), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ProdutoDTO> desativar(@PathVariable @Valid Long id) {
+    public ResponseEntity<ProdutoDTO> desativar(@PathVariable @Valid Long id) throws BadRequestException {
         produtoService.desativar(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

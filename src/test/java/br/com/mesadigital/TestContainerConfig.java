@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -30,6 +31,7 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 @ActiveProfiles("dev")
 @TestMethodOrder(MethodOrderer.MethodName.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class TestContainerConfig {
 
     @Autowired
@@ -41,8 +43,6 @@ public class TestContainerConfig {
 
     private static final Network NETWORK = Network.newNetwork();
 
-
-
     @Container
     public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15.4-alpine")
             .withUsername("postgres")
@@ -50,22 +50,29 @@ public class TestContainerConfig {
             .withPassword("secret")
             .withNetwork(NETWORK)
             .withNetworkAliases("postgres-db") // nome para outros containers acessarem
-            .withCommand("postgres", "-c", "listen_addresses=*");
+            .withCommand("postgres", "-c", "listen_addresses=*")
+            .withReuse(true)
+            .withExposedPorts(5432);
+
 
 
     @Container
     public static GenericContainer<?> redis = new GenericContainer<>("redis:7.2")
-            .withExposedPorts(6379);
+            .withExposedPorts(6379)
+            .withReuse(true);
+
 
     @Container
-    public static GenericContainer<?> financeiroContainer = new GenericContainer<>("financeiro-service:latest")
+    public static GenericContainer<?> financeiroContainer = new GenericContainer<>("hiranneri/financeiro-service:latest")
             .dependsOn(postgreSQLContainer)
             .withNetwork(NETWORK)
             .withEnv("SPRING_DATASOURCE_URL", "jdbc:postgresql://postgres-db:5432/vendas") // usa o alias
             .withEnv("SPRING_DATASOURCE_USERNAME", "postgres")
             .withEnv("SPRING_DATASOURCE_PASSWORD", "secret")
             .withCommand("sh", "-c", "apk add --no-cache postgresql-client && pg_isready -h postgres-db -p 5432")
-            .withExposedPorts(8082);
+            .withExposedPorts(8082)
+            .withReuse(true);
+
 
     public static String getFinanceiroBaseURL() {
         String hostContainerFinanceiro = financeiroContainer.getHost();
@@ -77,18 +84,29 @@ public class TestContainerConfig {
     @Container
     public static GenericContainer<?> zookeeperContainer = new GenericContainer<>("confluentinc/cp-zookeeper:7.3.0")
             .withNetwork(NETWORK)
-            .withNetworkAliases("zookeeper");
+            .withNetworkAliases("zookeeper")
+            .withReuse(true);
+
 
     @Container
     public static final KafkaContainer kafkaContainer = new KafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.3.0")
                                 .asCompatibleSubstituteFor("confluentinc/cp-kafka"));
 
+    private static String portaPostgreSQL(){
+        return postgreSQLContainer.getMappedPort(5432).toString();
+    }
+
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
+        registry.add("spring.datasource.hikari.maxLifetime", () -> "300000");
+        registry.add("spring.datasource.hikari.maximumPoolSize", () -> "100");
+        registry.add("spring.datasource.testWhileIdle", () -> "true");
+        registry.add("spring.datasource.testcontainers.properties-on-borrow", () -> "true");
 
 
         registry.add("spring.kafka.bootstrap-servers", kafkaContainer::getBootstrapServers);
@@ -114,7 +132,7 @@ public class TestContainerConfig {
                 () -> "br.com.mesadigital.vendas.controller.dto.kafka.PedidoOperacoesDTO");
         registry.add("spring.kafka.consumer.auto-offset-reset", () -> "earliest");
 
-        registry.add("spring.kafka.consumer.group-id", () -> "test-group");
+        registry.add("spring.kafka.consumer.group-id", () -> "testcontainers.properties-group");
 
         registry.add("spring.data.redis.host", ()-> "localhost");
         registry.add("spring.data.redis.port", ()-> redis.getMappedPort(6379).toString());
