@@ -29,7 +29,6 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(classes = VendasApplication.class)
 @AutoConfigureMockMvc
 @Testcontainers
-@ActiveProfiles("dev")
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class TestContainerConfig {

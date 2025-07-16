@@ -4,6 +4,17 @@ x-database-variables: &database-variables
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: secret
 
+x-kafka-variables: &kafka-variables
+  KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+  # --- Listeners separados por portas distintas ---
+  KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
+  KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT  # Define qual listener será usado para comunicação interna
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  KAFKA_ADVERTISED_HOST_NAME: localhost
+  KAFKA_BROKER_ID: 1
+
 services:
   banco-vendas:
     image: postgres:15.4-alpine
@@ -28,9 +39,12 @@ services:
       - "8081:8081"
     environment:
       - JAVA_OPTS=-Xms256m -Xmx512m
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=qa
     depends_on:
       - banco-vendas
+      - redis
+      - kafka
+      - zookeeper
     networks:
       - vendas-net
 
@@ -43,11 +57,45 @@ services:
       - redis-data:/data
     restart: unless-stopped
 
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    restart: always
+    environment:
+      <<: *kafka-variables
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOO_ENABLE_AUTH: yes
+      ZOO_SERVER_USERS: kafka,user1
+      ZOO_SERVER_PASSWORDS: secret,secret
+      ZOO_CLIENT_USER: user1
+      ZOO_CLIENT_PASSWORD: secret
+
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
 
 networks:
+  kafka-net:
+    external: true
   vendas-net:
     driver: bridge
 
 volumes:
   mesadigital-vendas-pg-volume:
   redis-data:
+  zookeeper_data:
+  kafka_data:

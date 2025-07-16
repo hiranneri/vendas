@@ -10,11 +10,11 @@ spring:
     host: localhost
     port: 6379
   application:
-    name: operacoes
+    name: vendas
   kafka:
     bootstrap-servers: localhost:9093
   datasource:
-    url: jdbc:postgresql://localhost:5433/vendas
+    url: jdbc:postgresql://mesadigital-vendas-pg:5433/vendas
     username: postgres
     password: secret
     driver-class-name: org.postgresql.Driver
